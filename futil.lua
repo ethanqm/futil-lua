@@ -59,7 +59,7 @@ function hash_true(t)
 end
 
 function show_t(t, indents)
-    local visited_tables = hash_true({t, _G, _ENV})
+    local visited_tables = hash_true(map(tostring,{t, _G, _ENV}))
     local indents = indents or 0
     local iden = "  "
     local out = {string.rep(iden,indents).."{"}
@@ -67,13 +67,13 @@ function show_t(t, indents)
     for i,v in pairs(t) do
         out[#out+1] = "\n"..string.rep(iden,indents+1)
         if type(v) == "table" then
-            if visited_tables[v] then
+            if visited_tables[tostring(v)] then
                 print("recursive def:"..tostring(i).." "..tostring(v))
                 out[#out+1] = i..": rec{ ... },"
             else
                 out[#out+1] = i..": ".."table:\n"..show_t(v, indents+2)..","
             end
-            visited_tables = hash_true(shadow_union({v}, visited_tables))
+            visited_tables = hash_true(shadow_union({tostring(v)}, visited_tables))
         else
             --@todo! refactor
             local fixbool = function(b)
@@ -81,13 +81,13 @@ function show_t(t, indents)
                 return tostring(b)
             end
             local v = fixbool(v)
-            local fixfunc = function(k,f)
-                if type(f) ~= "function" then
-                    return f
-                end
-                return k.."(fn)" --key-name
-            end
-            local v = fixfunc(i,v)
+            --local fixfunc = function(k,f)
+            --    if type(f) ~= "function" then
+            --        return f
+            --    end
+            --    return tostring(f).."(fn)" --key-name
+            --end
+            --local v = fixfunc(i,v)
 
             function show(out, i,v)
                 out[#out+1] = i..": "..v..","
@@ -96,7 +96,7 @@ function show_t(t, indents)
             local res, _  = pcall(show, out,i,v)
             if not res then
                 --if fail to print value, print key again
-                show(out,tostring(i),tostring(i).."(np)")
+                show(out,tostring(i),tostring(v).."(np)"..type(v))
             end
 
         end
@@ -218,3 +218,10 @@ function iflatten(t)
     return out
 end
 
+function after(a,b)
+    return function(x)
+        a(b(x))
+    end
+end
+
+function ps(x) return after(print, tostring)(x) end
