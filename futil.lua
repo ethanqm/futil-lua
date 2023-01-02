@@ -1,5 +1,15 @@
 require("math")
 
+op = {
+    add = function(a,b) return a+b end,
+    sub = function(a,b) return a-b end,
+    mul = function(a,b) return a*b end,
+    div = function(a,b) return a/b end,
+    mod = function(a,b) return a%b end,
+    index = function(t,k) return t[k] end,
+    concat = function(a,b) return a..b end,
+}
+
 function inverse_table(t)
     local out = {}
     for key, value in pairs(t) do
@@ -111,11 +121,17 @@ function show_t(t, indents)
     return table.concat(out)
 end
 
-function pt(t) print(show_t(t)) end
 
 function map(f, t)
     local out = {}
     for i,v in ipairs(t) do
+        out[i] = f(v)
+    end
+    return out
+end
+function kmap(f, t)
+    local out = {}
+    for i,v in pairs(t) do
         out[i] = f(v)
     end
     return out
@@ -127,11 +143,23 @@ function forEach(f, t)
     end
     return t
 end
+function forEachK(f, t)
+    for i,v in pairs(t) do
+        t[i] = f(v)
+    end
+    return t
+end
 
 --aka reduce
 function fold(f, init, t)
     for _,v in ipairs(t) do
         init = f(init, v)
+    end
+    return init
+end
+function foldr(f, init, t)
+    for _,v in ipairs(t) do
+        init = f(v,init)
     end
     return init
 end
@@ -197,12 +225,28 @@ function kiter_take(it, n)
     return out
 end
 
-function iflatten(t)
+function filter_iter(p, it)
+    return coroutine.create(function(p,it)
+        while true do
+            local e = coroutine.resume(it)
+            if e == nil then coroutine.yield(e) end
+            if p(e) then coroutine.yield(e) end
+        end
+    end)
+
+end
+
+function flatten(t,n)
     local out = {}
-    local function rec(out, e)
+    local function rec(out, e,n)
+        if n == 0 then return end
         for _,v in ipairs(e) do
             if type(v) == "table" then
-                rec(out, v)
+                if n == nil then
+                    rec(out, v, nil)
+                else
+                    rec(out, v, n-1)
+                end
             else
                 out[#out+1] = v
             end
@@ -218,10 +262,86 @@ function iflatten(t)
     return out
 end
 
-function after(a,b)
-    return function(x)
-        a(b(x))
+function iunion(a,b)
+    return flatten({a,b},1)
+end
+
+function apply(f, ...) return f(...) end
+function id(x) return x end
+function first(x,...) return x end
+function flip(a,b) return b,a end
+function after(f,g,...)--broken
+    local fs = {...}
+    if select("#",...) == 0 then 
+        return function(...)
+            return f(...)
+        end
+    else
+        return after(f(g),...)
+    end
+end
+function dotwice(f, args)
+    return f(f(table.unpack(args)))
+end
+function fork(f,g,x) return f(x)(g(x)) end
+
+function decl(name,value) _ENV[name] = value end
+
+function flatmap(...) return after(flatten, map)(...) end
+
+function outer_product(a,b,f)
+    local out = {}
+    for i,x in ipairs(b) do
+        out[#out+1] = {}
+        for j,y in ipairs(a) do
+            if f == nil then 
+                out[i][j] = {y,x}
+            else
+                out[i][j] = f(y,x)
+            end
+        end
+    end
+    return out
+end
+
+function curry(f,args,n)
+    local n = n or debug.getinfo(f).nparams
+    local args = args or {}
+    if debug.getinfo(f).isvararg and n <= #args then
+        return f(table.unpack(args))
+    elseif #args == n then
+        return f(table.unpack(args))
+    elseif #args < n then
+        return function(nargs)
+            local args = args or {}
+            local nargs = nargs or {}
+            local flargs = flatten({nargs,args},1)
+            return curry(f, flargs,n)
+        end
+    else 
+        return "bad args"
     end
 end
 
-function ps(x) return after(print, tostring)(x) end
+function make_vararg(f)
+    local n = debug.getinfo(f).nparams
+    local consumer = function(x, ...)
+        return fold(f, x, {...})
+    end
+    return consumer
+end
+
+varg_math = {
+    sum = make_vararg(op.add),
+    product = make_vararg(op.mul),
+}
+
+-- repl stuff (which barely prints btw)
+ps = after(print, tostring)
+pt = after(print, show_t)
+su = make_vararg(shadow_union)
+
+ez = su({
+    double = function(a) return a*2 end,
+},op,varg_math)
+
