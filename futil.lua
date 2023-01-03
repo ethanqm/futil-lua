@@ -79,6 +79,7 @@ function show_t(t, indents,vts)
 
     for i,v in pairs(t) do
         out[#out+1] = "\n"..string.rep(iden,indents+1)
+        if v == t then goto cont end
         if type(v) == "table" then
             if visited_tables[v] then
                 print("recursive def:"..tostring(i).." "..tostring(v))
@@ -113,6 +114,7 @@ function show_t(t, indents,vts)
             end
 
         end
+        ::cont::
     end
 
 
@@ -346,6 +348,14 @@ su = make_vararg(shadow_union)
 ez = su({
     double = function(a) return a*2 end,
     inc = curry(op.add, {1}),
-    dec = curry(op.sub, {1})
+    dec = curry(op.sub, {1}),
+    time = function(f,args, n)
+        local start = os.time()
+        for i=1,n do
+            f(table.unpack(args))
+        end
+        local en = os.time()
+        print(os.difftime(en,start)) end,
+
 },op,varg_math)
 
