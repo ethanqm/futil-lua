@@ -8,6 +8,7 @@ op = {
     mod = function(a,b) return a%b end,
     index = function(t,k) return t[k] end,
     concat = function(a,b) return a..b end,
+    pair = function(a,b) return {a,b} end,
 }
 
 function inverse_table(t)
@@ -60,9 +61,9 @@ end
 
 function hash_true(t)
     local out = {}
-    for k,_ in pairs(t) do
+    for k,v in pairs(t) do
         if k == "true" then goto cont end
-        out[k] = true
+        out[v] = true
         ::cont::
     end
     return out
