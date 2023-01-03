@@ -158,8 +158,8 @@ function fold(f, init, t)
     return init
 end
 function foldr(f, init, t)
-    for _,v in ipairs(t) do
-        init = f(v,init)
+    for i=#t,1, -1 do
+        init = f(t[i], init)
     end
     return init
 end
@@ -266,18 +266,16 @@ function iunion(a,b)
     return flatten({a,b},1)
 end
 
+function collect(...) return {...} end
 function apply(f, ...) return f(...) end
 function id(x) return x end
+function var_id(...) return ... end
 function first(x,...) return x end
 function flip(a,b) return b,a end
-function after(f,g,...)--broken
+function after(...)
     local fs = {...}
-    if select("#",...) == 0 then 
-        return function(...)
-            return f(...)
-        end
-    else
-        return after(f(g),...)
+    return function(...)
+        foldr(apply, var_id(...), fs)
     end
 end
 function dotwice(f, args)
@@ -318,7 +316,7 @@ function curry(f,args,n)
             local flargs = flatten({nargs,args},1)
             return curry(f, flargs,n)
         end
-    else 
+    else
         return "bad args"
     end
 end
