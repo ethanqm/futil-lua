@@ -239,7 +239,7 @@ end
 function flatten(t,n)
     local out = {}
     local function rec(out, e,n)
-        if n == 0 then return end
+        if n == 0 then out[#out+1]=e; return end
         for _,v in ipairs(e) do
             if type(v) == "table" then
                 if n == nil then
@@ -254,7 +254,7 @@ function flatten(t,n)
     end
     for _,v in ipairs(t) do
         if type(v) == "table" then
-            rec(out, v)
+            rec(out, v,n)
         else
             out[#out+1] = v
         end
@@ -285,7 +285,7 @@ function fork(f,g,x) return f(x)(g(x)) end
 
 function decl(name,value) _ENV[name] = value end
 
-function flatmap(...) return after(flatten, map)(...) end
+function flatmap(f,t) return flatten(map(f,t)) end
 
 function outer_product(a,b,f)
     local out = {}
@@ -313,10 +313,11 @@ function curry(f,args,n)
         return function(nargs)
             local args = args or {}
             local nargs = nargs or {}
-            local flargs = flatten({nargs,args},1)
+            local flargs = flatten({args,nargs},1)
             return curry(f, flargs,n)
         end
     else
+        after(print,show_t)(args)
         return "bad args"
     end
 end
@@ -341,5 +342,7 @@ su = make_vararg(shadow_union)
 
 ez = su({
     double = function(a) return a*2 end,
+    inc = curry(op.add, {1}),
+    dec = curry(op.sub, {1})
 },op,varg_math)
 
