@@ -64,13 +64,15 @@ function hash_true(t)
     for k,v in pairs(t) do
         if k == "true" then goto cont end
         out[v] = true
+        out[k] = true
         ::cont::
     end
     return out
 end
 
-function show_t(t, indents)
-    local visited_tables = hash_true(map(tostring,{t, _G, _ENV}))
+function show_t(t, indents,vts)
+    local vts = vts or {}
+    local visited_tables = shadow_union(hash_true({t, _G, _ENV}), vts)
     local indents = indents or 0
     local iden = "  "
     local out = {string.rep(iden,indents).."{"}
@@ -78,13 +80,13 @@ function show_t(t, indents)
     for i,v in pairs(t) do
         out[#out+1] = "\n"..string.rep(iden,indents+1)
         if type(v) == "table" then
-            if visited_tables[tostring(v)] then
+            if visited_tables[v] then
                 print("recursive def:"..tostring(i).." "..tostring(v))
                 out[#out+1] = i..": rec{ ... },"
             else
-                out[#out+1] = i..": ".."table:\n"..show_t(v, indents+2)..","
+                out[#out+1] = i..": ".."table:\n"..show_t(v, indents+2, visited_tables)..","
             end
-            visited_tables = hash_true(shadow_union({tostring(v)}, visited_tables))
+            visited_tables = shadow_union(hash_true({v}), visited_tables)
         else
             --@todo! refactor
             local fixbool = function(b)
