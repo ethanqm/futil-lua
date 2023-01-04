@@ -9,6 +9,7 @@ op = {
     index = function(t,k) return t[k] end,
     concat = function(a,b) return a..b end,
     pair = function(a,b) return {a,b} end,
+    count = function(x) return #x end,
 }
 
 function inverse_table(t)
@@ -90,18 +91,11 @@ function show_t(t, indents,vts)
             visited_tables = shadow_union(hash_true({v}), visited_tables)
         else
             --@todo! refactor
-            local fixbool = function(b)
-                if type(b) ~= "bool" then return b end
-                return tostring(b)
-            end
-            local v = fixbool(v)
-            --local fixfunc = function(k,f)
-            --    if type(f) ~= "function" then
-            --        return f
-            --    end
-            --    return tostring(f).."(fn)" --key-name
+            --local fixbool = function(b)
+            --    if type(b) ~= "bool" then return b end
+            --    return tostring(b)
             --end
-            --local v = fixfunc(i,v)
+            --local v = fixbool(v)
 
             function show(out, i,v)
                 out[#out+1] = i..": "..v..","
@@ -277,16 +271,25 @@ function id(x) return x end
 function var_id(...) return ... end
 function first(x,...) return x end
 function flip(a,b) return b,a end
-function after(...)
+function after(...) --function composition
     local fs = {...}
+    local f = fs[#fs] --first to run
+    fs[#fs] = nil --clear
+    local g = fs[#fs] --second to run
+    fs[#fs] = nil --clear
     return function(...)
-        foldr(apply, var_id(...), fs)
+        return foldr(apply, g(f(...)), fs)
     end
 end
 function dotwice(f, args)
     return f(f(table.unpack(args)))
 end
 function fork(f,g,x) return f(x)(g(x)) end
+function fork_train(m,b,n)
+    return function(...)
+        return b(m(...), n(...))
+    end
+end
 
 function decl(name,value) _ENV[name] = value end
 
@@ -328,7 +331,6 @@ function curry(f,args,n)
 end
 
 function make_vararg(f)
-    local n = debug.getinfo(f).nparams
     local consumer = function(x, ...)
         return fold(f, x, {...})
     end
@@ -356,6 +358,7 @@ ez = su({
         end
         local en = os.time()
         print(os.difftime(en,start)) end,
+    avg = fork_train(varg_math.sum, op.div, after(op.count,collect))
 
 },op,varg_math)
 
