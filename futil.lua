@@ -163,34 +163,20 @@ function foldr(f, init, t)
     return init
 end
 
-function zip(t1,t2)
+function zip_with(f,...)
     local out = {}
-    local longest = math.max(#t1,#t2)
+    local ts = {...}
+    local longest = math.max(table.unpack(map(op.count,ts)))
 
     for i=1, longest do
-        out[i] = {t1[i], t2[i]}
+        local nths = map(function(t) return op.index(t,i) end, ts)
+        out[i] = f(table.unpack(nths))
     end
     return out
 end
 
-function zip3(t1,t2,t3)
-    local out = {}
-    local longest = math.max(#t3,#t1,#t2)
-
-    for i=1, longest do
-        out[i] = {t1[i], t2[i], t3[i]}
-    end
-    return out
-end
-
-function zip_with(f,t1,t2)
-    local out = {}
-    local longest = math.max(#t1,#t2)
-
-    for i=1, longest do
-        out[i] = f(t1[i], t2[i])
-    end
-    return out
+function zip(...)
+    return zip_with(collect,...)
 end
 
 function gen_iiter(t)
