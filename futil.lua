@@ -169,6 +169,8 @@ function zip_with(f,...)
     local longest = math.max(table.unpack(map(op.count,ts)))
 
     for i=1, longest do
+        --might be useful elsewhere
+        --!difficult to curry op.index,.. w flip, very hard
         local nths = map(function(t) return op.index(t,i) end, ts)
         out[i] = f(table.unpack(nths))
     end
@@ -346,6 +348,17 @@ varg = {
     sum = make_vararg(op.add),
     product = make_vararg(op.mul),
 }
+
+
+function cons(a,rest)
+    return {a,rest}
+end
+function car(t)
+    return t[1]
+end
+function cdr(t)
+    return t[2]
+end
 
 -- repl stuff (which barely prints btw)
 ps = comp(print, tostring) -- ooh~ point free~
