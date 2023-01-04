@@ -6,6 +6,8 @@ op = {
     mul = function(a,b) return a*b end,
     div = function(a,b) return a/b end,
     mod = function(a,b) return a%b end,
+    land = function(a,b) return a and b end,
+    lor = function(a,b) return a or b end,
     index = function(t,k) return t[k] end,
     concat = function(a,b) return a..b end,
     pair = function(a,b) return {a,b} end,
@@ -347,6 +349,8 @@ end
 varg = {
     sum = make_vararg(op.add),
     product = make_vararg(op.mul),
+    any = make_vararg(op.lor),
+    all  = make_vararg(op.land),
 }
 
 
