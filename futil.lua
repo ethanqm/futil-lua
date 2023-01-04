@@ -175,7 +175,7 @@ end
 
 function zip3(t1,t2,t3)
     local out = {}
-    local longest = math.max(#t3,math.max(#t1,#t2))
+    local longest = math.max(#t3,#t1,#t2)
 
     for i=1, longest do
         out[i] = {t1[i], t2[i], t3[i]}
@@ -232,7 +232,6 @@ function filter_iter(p, it)
             if p(e) then coroutine.yield(e) end
         end
     end)
-
 end
 
 function flatten(t,n)
@@ -267,12 +266,15 @@ end
 
 function collect(...) return {...} end
 function apply(f, ...) return f(...) end
-function id(x) return x end
+function id(x) return x end --I combinator
 function var_id(...) return ... end
-function first(x,...) return x end
+function first(x,...) return x end --K combinator
 function flip(a,b) return b,a end
-function after(...) --function composition
+function rep(a) return table.unpack({a,a}) end --M combinator
+function comp(...) --function composition/B combinator
     local fs = {...}
+    --extracting first two funcs to 
+    --properly handle vargs/table.unpack
     local f = fs[#fs] --first to run
     fs[#fs] = nil --clear
     local g = fs[#fs] --second to run
@@ -284,14 +286,22 @@ end
 function dotwice(f, args)
     return f(f(table.unpack(args)))
 end
-function fork(f,g,x) return f(x)(g(x)) end
-function fork_train(m,b,n)
+function fork(f,g,x) --S combinator
+    return f(x)(g(x))
+end
+function fork_train(m,b,n) --S' combinator
     return function(...)
         return b(m(...), n(...))
     end
 end
+function fix(f,x) --Y combinator
+    local first = f(x)
+    if first == x then return first end
+    return fix(f, first)
+end
 
 function decl(name,value) _ENV[name] = value end
+function undecl(name) _ENV[name] = nil end
 
 function flatmap(f,t) return flatten(map(f,t)) end
 
@@ -300,12 +310,21 @@ function outer_product(a,b,f)
     for i,x in ipairs(b) do
         out[#out+1] = {}
         for j,y in ipairs(a) do
-            if f == nil then 
-                out[i][j] = {y,x}
+            if f == nil then
+                out[i][j] = {y,x}--cartesian product
             else
                 out[i][j] = f(y,x)
             end
         end
+    end
+    return out
+end
+
+function range(start, notinc, step)
+    local step = step or 1
+    local out = {}
+    for i=start,notinc-1,step do
+        out[#out+1] = i
     end
     return out
 end
@@ -325,7 +344,7 @@ function curry(f,args,n)
             return curry(f, flargs,n)
         end
     else
-        after(print,show_t)(args)
+         comp(print,show_t)(args)
         return "bad args"
     end
 end
@@ -337,28 +356,30 @@ function make_vararg(f)
     return consumer
 end
 
-varg_math = {
+varg = {
     sum = make_vararg(op.add),
     product = make_vararg(op.mul),
 }
 
 -- repl stuff (which barely prints btw)
-ps = after(print, tostring)
-pt = after(print, show_t)
+ps = comp(print, tostring) -- ooh~ point free~
+pt = comp(print, show_t)
 su = make_vararg(shadow_union)
 
 ez = su({
-    double = function(a) return a*2 end,
+    double = curry(op.mul, {2}),
     inc = curry(op.add, {1}),
     dec = curry(op.sub, {1}),
     time = function(f,args, n)
         local start = os.time()
-        for i=1,n do
+        for _=1,n do
             f(table.unpack(args))
         end
         local en = os.time()
-        print(os.difftime(en,start)) end,
-    avg = fork_train(varg_math.sum, op.div, after(op.count,collect))
+        print(os.difftime(en,start))
+    end,
+    -- +/ % #
+    avg = fork_train(varg.sum, op.div, comp(op.count,collect)),
 
-},op,varg_math)
+},op,varg)
 
