@@ -5,7 +5,8 @@ op = {
     sub = function(a,b) return a-b end,
     mul = function(a,b) return a*b end,
     div = function(a,b) return a/b end,
-    neg = function(a) return -a end,
+    min = function(a) return -a end,
+    inv = function(a) return 1/a end,
 
     eq = function(a,b) return a==b end,
     geq = function(a,b) return a>=b end,
@@ -274,8 +275,8 @@ function flip(a,b) return b,a end
 function rep(a) return table.unpack({a,a}) end --M combinator
 function comp(...) --function composition/B combinator
     local fs = {...}
-    --extracting first two funcs to 
-    --properly handle vargs/table.unpack
+    --extracting first two funcs to
+    --handle early uses of vargs/table.unpack
     local f = fs[#fs] --first to run
     fs[#fs] = nil --clear
     local g = fs[#fs] --second to run
@@ -303,6 +304,7 @@ end
 
 function decl(name,value) _ENV[name] = value end
 function undecl(name) _ENV[name] = nil end
+
 function use(t) -- unpack table into calling scope
     forEachK(comp(decl, table.unpack), kvs_of(t))
 end
@@ -333,6 +335,10 @@ function outer_product(a,b,f)
         end
     end
     return out
+end
+
+function inner_product(a,b) -- dot product anyway
+    return fold(op.add, 0, zip_with(op.mul, a,b))
 end
 
 function range(start, notinc, step)
@@ -377,7 +383,7 @@ varg = {
     any = make_vararg(op.lor),
     all = make_vararg(op.land),
     none = make_vararg(comp(op.lnot,op.land)),
-    one = make_vararg(op.lxor),
+    xone = make_vararg(op.lxor),
 }
 
 
@@ -389,6 +395,12 @@ function car(t)
 end
 function cdr(t)
     return t[2]
+end
+function cdar(t)
+    return comp(car,cdr)
+end
+function cadr(t)
+    return comp(cdr,car)
 end
 
 -- repl stuff (which barely prints btw)
