@@ -5,9 +5,20 @@ op = {
     sub = function(a,b) return a-b end,
     mul = function(a,b) return a*b end,
     div = function(a,b) return a/b end,
-    mod = function(a,b) return a%b end,
+    neg = function(a) return -a end,
+
+    eq = function(a,b) return a==b end,
+    geq = function(a,b) return a>=b end,
+    leq = function(a,b) return a<=b end,
+    neq = function(a,b) return a~=b end,
+    lt = function(a,b) return a>b end,
+    gt = function(a,b) return a<b end,
+
+    lnot = function(a) return not a end,
     land = function(a,b) return a and b end,
     lor = function(a,b) return a or b end,
+    lxor = function(a,b) return (a or b) and not (a and b) end,
+
     index = function(t,k) return t[k] end,
     concat = function(a,b) return a..b end,
     pair = function(a,b) return {a,b} end,
@@ -292,6 +303,20 @@ end
 
 function decl(name,value) _ENV[name] = value end
 function undecl(name) _ENV[name] = nil end
+function use(t) -- unpack table into calling scope
+    forEachK(comp(decl, table.unpack), kvs_of(t))
+end
+function unuse(t) -- set keys to nil
+    forEachK(undecl, keys_of(t))
+end
+function unuse_list(t) -- undeclare list of strings
+    forEach(function(s)
+        if type(s) == "string" then
+            undecl(s)
+        end
+    end,
+        vals_of(t))
+end
 
 function flatmap(f,t) return flatten(map(f,t)) end
 
@@ -350,7 +375,9 @@ varg = {
     sum = make_vararg(op.add),
     product = make_vararg(op.mul),
     any = make_vararg(op.lor),
-    all  = make_vararg(op.land),
+    all = make_vararg(op.land),
+    none = make_vararg(comp(op.lnot,op.land)),
+    one = make_vararg(op.lxor),
 }
 
 
