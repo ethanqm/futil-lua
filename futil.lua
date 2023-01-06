@@ -1,31 +1,35 @@
 require("math")
 
 op = {
+    --math
     add = function(a,b) return a+b end,
     sub = function(a,b) return a-b end,
     mul = function(a,b) return a*b end,
     div = function(a,b) return a/b end,
+    idiv = function(a,b) return a//b end,
     min = function(a) return -a end,
     inv = function(a) return 1/a end,
-
+    --ord
     eq = function(a,b) return a==b end,
     geq = function(a,b) return a>=b end,
     leq = function(a,b) return a<=b end,
     neq = function(a,b) return a~=b end,
     lt = function(a,b) return a>b end,
     gt = function(a,b) return a<b end,
-
+    --boolean
     lnot = function(a) return not a end,
     land = function(a,b) return a and b end,
     lor = function(a,b) return a or b end,
     lxor = function(a,b) return (a or b) and not (a and b) end,
-
+    --table
     index = function(t,k) return t[k] end,
     concat = function(a,b) return a..b end,
     pair = function(a,b) return {a,b} end,
+    encl = function(a) return {a} end,
     count = function(x) return #x end,
+    --scope
     decl = function (name,value) _ENV[name] = value end,
-
+        --want local and local x <close> variants
 }
 
 function inverse_table(t)
@@ -398,7 +402,7 @@ end
 function cdr(t)
     return t[2]
 end
---run to use cdaddr etc rtl order
+--run to use cdaddr etc r2l order
 function gen_cxr()
     local i2l_map = { "","a","d" }
     local i2f_map = { id,car,cdr }
@@ -406,8 +410,8 @@ function gen_cxr()
         for j = 1,3 do
             for k = 2,3 do
                 for l=2,3 do
-                    local name = "c"..table.concat(map(
-                        curry(op.index, {i2l_map}),
+                    local name = "c"..table.concat(
+                        map(curry(op.index, {i2l_map}),
                         {i,j,k,l})).."r"
                     local fun = comp(
                         table.unpack(
