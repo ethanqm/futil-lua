@@ -35,6 +35,9 @@ function inverse_table(t)
     end
     return out
 end
+function and_inverse(t)
+    return t,inverse_table(t)
+end
 
 function keys_of(t)
     local out = {}
@@ -304,8 +307,8 @@ function fix(f,x) --Y combinator
     return fix(f, first)
 end
 
-function undecl(name) op.decl(name,nil) end
 
+function undecl(name) op.decl(name,nil) end
 function use(t) -- unpack table into calling scope
     forEachK(comp(op.decl, table.unpack), kvs_of(t))
 end
@@ -388,20 +391,36 @@ varg = {
 }
 
 
-function cons(a,rest)
-    return {a,rest}
-end
+cons = op.pair
 function car(t)
     return t[1]
 end
 function cdr(t)
     return t[2]
 end
-function cdar(t)
-    return comp(car,cdr)
-end
-function cadr(t)
-    return comp(cdr,car)
+--run to use cdaddr etc rtl order
+function gen_cxr()
+    local i2l_map = { "","a","d" }
+    local i2f_map = { id,car,cdr }
+    for i=1,3 do
+        for j = 1,3 do
+            for k = 2,3 do
+                for l=2,3 do
+                    local name = "c"..table.concat(map(
+                        curry(op.index, {i2l_map}),
+                        {i,j,k,l})).."r"
+                    local fun = comp(
+                        table.unpack(
+                            map(function(idx)
+                                --can't curry op.index here?
+                                return i2f_map[idx]
+                            end,
+                            {i,j,k,l})))
+                    op.decl(name, fun)
+                end
+            end
+        end
+    end
 end
 
 --usage in progress
@@ -434,7 +453,8 @@ ez = su({
         print(os.difftime(en,start))
     end,
     -- +/ % #
-    avg = fork_train(varg.sum, op.div, comp(op.count,collect)),
+    vavg = fork_train(varg.sum, op.div, comp(op.count,collect)),
+    tavg = fork_train(comp(varg.sum,table.unpack), op.div, op.count),
 
 },op,varg)
 
