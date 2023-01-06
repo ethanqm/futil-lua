@@ -24,6 +24,8 @@ op = {
     concat = function(a,b) return a..b end,
     pair = function(a,b) return {a,b} end,
     count = function(x) return #x end,
+    decl = function (name,value) _ENV[name] = value end,
+
 }
 
 function inverse_table(t)
@@ -302,11 +304,10 @@ function fix(f,x) --Y combinator
     return fix(f, first)
 end
 
-function decl(name,value) _ENV[name] = value end
-function undecl(name) _ENV[name] = nil end
+function undecl(name) op.decl(name,nil) end
 
 function use(t) -- unpack table into calling scope
-    forEachK(comp(decl, table.unpack), kvs_of(t))
+    forEachK(comp(op.decl, table.unpack), kvs_of(t))
 end
 function unuse(t) -- set keys to nil
     forEachK(undecl, keys_of(t))
@@ -401,6 +402,18 @@ function cdar(t)
 end
 function cadr(t)
     return comp(cdr,car)
+end
+
+--usage in progress
+--used like `local x <close> = get_defer_handle...
+function get_defer_handle(f, args)
+    local meta = {
+        __close = function(this, err)
+            f(table.unpack(args))
+            this = nil
+        end,
+    }
+    return setmetatable({}, meta)
 end
 
 -- repl stuff (which barely prints btw)
