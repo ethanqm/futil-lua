@@ -109,7 +109,7 @@ function show_t(t, indents,vts)
                 print("recursive def:"..tostring(i).." "..tostring(v))
                 out[#out+1] = i..": rec{ ... },"
             else
-                out[#out+1] = i..": ".."table:\n"..show_t(v, indents+2, visited_tables)..","
+                out[#out+1] = i..": "..tostring(v).."\n"..show_t(v, indents+2, visited_tables)..","
             end
             visited_tables = shadow_union(hash_true({v}), visited_tables)
         else
@@ -406,10 +406,10 @@ end
 function gen_cxr()
     local i2l_map = { "","a","d" }
     local i2f_map = { id,car,cdr }
-    for i=1,3 do
+    for i = 1,3 do
         for j = 1,3 do
             for k = 2,3 do
-                for l=2,3 do
+                for l = 2,3 do
                     local name = "c"..table.concat(
                         map(curry(op.index, {i2l_map}),
                         {i,j,k,l})).."r"
@@ -425,6 +425,32 @@ function gen_cxr()
             end
         end
     end
+end
+
+function arr_2_lisp(t)
+    return foldr(cons,{},t)
+end
+
+function mapcar(f,t)
+    local out = {}
+    while #t ~= 0 do
+        fx = f(car(t))
+        out[#out+1] = fx
+        t = cdr(t)
+    end
+    return arr_2_lisp(out)--not ideal
+end
+
+function lisp_reach(idxs,t)
+    if t == nil or idxs == nil then return t end
+    if #idxs == 0 then return t end
+    return lisp_reach(cdr(idxs), t[car(idxs)])
+end
+
+function reach_into(idxs, t)--aka scrounge
+    if t == nil or idxs == nil then return t end
+    if #idxs == 0 then return t end
+    return reach_into(table.remove(t,1),t[idxs[1]])
 end
 
 --usage in progress
