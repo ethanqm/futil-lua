@@ -465,6 +465,42 @@ function get_defer_handle(f, args)
     return setmetatable({}, meta)
 end
 
+function chars(s)
+    local out = {}
+    for i=1,#s do
+        out[#out+1] = string.sub(s,i,i)
+    end
+    return out
+end
+
+
+--commutes strings, unique enough
+function char_sort(...)
+    local s = table.concat({...})
+    local cs = chars(s)
+    table.sort(cs)
+    return table.concat(cs)
+end
+
+function make_cache(f)
+    local cache = {}
+    local meta = {
+        __call = function(self,...)
+            local args = {...}
+            local key = char_sort(table.unpack(map(tostring, args)))
+            local stored = rawget(self,key)
+            if stored == nil then
+                local comped = f(table.unpack(args))
+                rawset(self,key,comped)
+                return comped
+            else
+                return stored
+            end
+        end
+    }
+    return setmetatable(cache, meta)
+end
+
 -- repl stuff (which barely prints btw)
 ps = comp(print, tostring) -- ooh~ point free~
 pt = comp(print, show_t)
@@ -485,6 +521,13 @@ ez = su({
     -- +/ % #
     vavg = fork_train(varg.sum, op.div, comp(op.count,collect)),
     tavg = fork_train(comp(varg.sum,table.unpack), op.div, op.count),
+    fact = function(n,r)
+        local r = r or 1
+        if n < 2 then return r
+        else
+            return ez.fact(n-1,r*n)
+        end
+    end,
 
 },op,varg)
 
