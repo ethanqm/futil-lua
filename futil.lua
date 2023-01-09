@@ -487,7 +487,7 @@ function make_cache(f)
     local meta = {
         __call = function(self,...)
             local args = {...}
-            local key = char_sort(table.unpack(map(tostring, args)))
+            local key = table.concat(map(tostring, args))
             local stored = rawget(self,key)
             if stored == nil then
                 local comped = f(table.unpack(args))
