@@ -327,6 +327,9 @@ function unuse_list(t) -- undeclare list of strings
     end,
         vals_of(t))
 end
+function toggle(varname)-- "references"
+    _ENV[varname] = not _ENV[varname]
+end
 
 function flatmap(f,t) return flatten(map(f,t)) end
 
