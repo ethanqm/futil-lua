@@ -331,7 +331,7 @@ function toggle(varname)-- "references"
     _ENV[varname] = not _ENV[varname]
 end
 
-function flatmap(f,t) return flatten(map(f,t)) end
+function flatmap(f,t) return flatten(map(f,t),1) end
 
 function outer_product(a,b,f)
     local out = {}
@@ -394,7 +394,7 @@ varg = {
     any = make_vararg(op.lor),
     all = make_vararg(op.land),
     none = make_vararg(comp(op.lnot,op.land)),
-    xone = make_vararg(op.lxor),
+    oddn = make_vararg(op.lxor),
 }
 
 
