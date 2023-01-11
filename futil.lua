@@ -504,7 +504,7 @@ function make_cache(f)
     return setmetatable(cache, meta)
 end
 
-function shadow(sup,sub)
+function fallback(sup,sub)
     local meta = {
         __index = function(self,k)
             local stored = rawget(self,k)
@@ -516,6 +516,19 @@ function shadow(sup,sub)
         end
     }
     return setmetatable(sup,meta)
+end
+function shadow(sup,sub)
+    local meta = {
+        __index = function(self,k)
+            local stored = rawget(self,k)
+            if stored == nil then
+                return rawget(sup,k)
+            else
+                return stored
+            end
+        end
+    }
+    return setmetatable(sub,meta)
 end
 
 function proto_from(t)
