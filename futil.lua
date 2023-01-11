@@ -504,32 +504,33 @@ function make_cache(f)
     return setmetatable(cache, meta)
 end
 
-function fallback(sup,sub)
+function fallback(main,fb)
     local meta = {
         __index = function(self,k)
             local stored = rawget(self,k)
             if stored == nil then
-                return rawget(sub,k)
+                return rawget(fb,k)
             else
                 return stored
             end
         end
     }
-    return setmetatable(sup,meta)
+    return setmetatable(main,meta)
 end
-function shadow(sup,sub)
+function shadow(main,shadow)--?
     local meta = {
         __index = function(self,k)
-            local stored = rawget(self,k)
+            local stored = rawget(shadow,k)
             if stored == nil then
-                return rawget(sup,k)
+                return rawget(self,k)
             else
                 return stored
             end
         end
     }
-    return setmetatable(sub,meta)
+    return setmetatable(main,meta)
 end
+
 
 function proto_from(t)
     return kmap(function(e) return type(e) end,t)
