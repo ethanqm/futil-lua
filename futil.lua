@@ -504,6 +504,31 @@ function make_cache(f)
     return setmetatable(cache, meta)
 end
 
+function shadow(sup,sub)
+    local meta = {
+        __index = function(self,k)
+            local stored = rawget(self,k)
+            if stored == nil then
+                return rawget(sub,k)
+            else
+                return stored
+            end
+        end
+    }
+    return setmetatable(sup,meta)
+end
+
+function proto_from(t)
+    return kmap(function(e) return type(e) end,t)
+end
+
+function satisfies(test, proto)--thanks TS
+    if #proto > #test then return false end
+    return varg.all(table.unpack(map(function(k)
+        return not not test[k] end
+        ,keys_of(proto))))
+end
+
 -- repl stuff (which barely prints btw)
 ps = comp(print, tostring) -- ooh~ point free~
 pt = comp(print, show_t)
