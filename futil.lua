@@ -517,19 +517,6 @@ function fallback(main,fb)
     }
     return setmetatable(main,meta)
 end
-function shadow(main,shadow)--?
-    local meta = {
-        __index = function(self,k)
-            local stored = rawget(shadow,k)
-            if stored == nil then
-                return rawget(self,k)
-            else
-                return stored
-            end
-        end
-    }
-    return setmetatable(main,meta)
-end
 
 
 function proto_from(t)
